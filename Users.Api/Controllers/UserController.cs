@@ -104,6 +104,28 @@ namespace Users.Api.Controllers
             }
         }
 
+        [HttpGet("GetUserByType")]
+        [Authorize]
+        public async Task<IActionResult> GetUserByType(UserType usersType)
+        {
+            try
+            {
+                var query = new GetByTypeQuery(usersType);
+                var user = await _mediator.Send(query);
+                if (user == null)
+                {
+                    _logger.LogWarning("GetByType: Usuarios con tipo {usersType} no encontrado.", usersType);
+                    return NotFound(new { Message = $"Usuarios  {usersType} no encontrado." });
+                }
+                return Ok(user);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error al obtener usuario por ID: {ErrorMessage}", e.Message);
+                return BadRequest(new { Message = e.Message });
+            }
+        }
+
         [HttpGet("GetAllUsers")]
         [Authorize]
         public async Task<IActionResult> GetAllUsers()
