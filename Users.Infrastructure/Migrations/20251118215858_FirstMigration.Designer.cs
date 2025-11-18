@@ -12,15 +12,15 @@ using Users.Infrastructure.Database;
 namespace Users.Infrastructure.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20250529063712_AddCreatedAtToUser")]
-    partial class AddCreatedAtToUser
+    [Migration("20251118215858_FirstMigration")]
+    partial class FirstMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.4")
+                .HasAnnotation("ProductVersion", "9.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -28,7 +28,6 @@ namespace Users.Infrastructure.Migrations
             modelBuilder.Entity("Users.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("CreatedAt")
@@ -68,47 +67,16 @@ namespace Users.Infrastructure.Migrations
                         .HasMaxLength(25)
                         .HasColumnType("character varying(25)");
 
+                    b.Property<string>("UserType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("UserId");
 
-                    b.ToTable("User");
-                });
-
-            modelBuilder.Entity("Users.Domain.Entities.UserRole", b =>
-                {
-                    b.Property<Guid>("RoleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("RoleName")
-                        .IsRequired()
-                        .HasColumnType("varchar(10)");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("FK_UserId");
-
-                    b.HasKey("RoleId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Role");
-                });
-
-            modelBuilder.Entity("Users.Domain.Entities.UserRole", b =>
-                {
-                    b.HasOne("Users.Domain.Entities.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_UserId");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Users.Domain.Entities.User", b =>
-                {
-                    b.Navigation("UserRoles");
+                    b.ToTable("User", t =>
+                        {
+                            t.HasCheckConstraint("Check_UserType", "UserType IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
+                        });
                 });
 #pragma warning restore 612, 618
         }

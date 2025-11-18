@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Users.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCreatedAtToUser : Migration
+    public partial class FirstMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,6 +21,7 @@ namespace Users.Infrastructure.Migrations
                     UserEmail = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     UserPhoneNumber = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
                     UserDirection = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    UserType = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     CreatedBy = table.Column<string>(type: "text", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
@@ -29,39 +30,13 @@ namespace Users.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_User", x => x.UserId);
+                    table.CheckConstraint("Check_UserType", "UserType IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
                 });
-
-            migrationBuilder.CreateTable(
-                name: "Role",
-                columns: table => new
-                {
-                    RoleId = table.Column<Guid>(type: "uuid", nullable: false),
-                    RoleName = table.Column<string>(type: "varchar(10)", nullable: false),
-                    FK_UserId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Role", x => x.RoleId);
-                    table.ForeignKey(
-                        name: "FK_UserId",
-                        column: x => x.FK_UserId,
-                        principalTable: "User",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Role_FK_UserId",
-                table: "Role",
-                column: "FK_UserId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Role");
-
             migrationBuilder.DropTable(
                 name: "User");
         }
