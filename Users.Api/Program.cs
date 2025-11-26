@@ -54,8 +54,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                     if (!string.IsNullOrEmpty(resourceAccess))
                     {
                         var resourceAccessJson = System.Text.Json.JsonDocument.Parse(resourceAccess);
-                        if (resourceAccessJson.RootElement.TryGetProperty("public-client", out var publiClientElement) &&
-                            publiClientElement.TryGetProperty("roles", out var rolesElement))
+                        if (resourceAccessJson.RootElement.TryGetProperty("backend-client", out var backendClientElement) &&
+                            backendClientElement.TryGetProperty("roles", out var rolesElement))
                         {
                             foreach (var role in rolesElement.EnumerateArray())
                             {

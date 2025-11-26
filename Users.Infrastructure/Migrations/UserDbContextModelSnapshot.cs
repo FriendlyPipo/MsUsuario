@@ -72,7 +72,7 @@ namespace Users.Infrastructure.Migrations
 
                     b.ToTable("User", t =>
                         {
-                            t.HasCheckConstraint("Check_UserType", "UserType IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
+                            t.HasCheckConstraint("Check_UserType", "\"UserType\" IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
                         });
                 });
 #pragma warning restore 612, 618

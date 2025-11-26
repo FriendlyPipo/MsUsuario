@@ -30,7 +30,7 @@ namespace Users.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_User", x => x.UserId);
-                    table.CheckConstraint("Check_UserType", "UserType IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
+                    table.CheckConstraint("Check_UserType", "\"UserType\" IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
                 });
         }
 

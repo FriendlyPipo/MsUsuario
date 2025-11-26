@@ -22,7 +22,7 @@ namespace Users.Infrastructure.Database.Configurations
             builder.ToTable( tb =>{
                 tb.HasCheckConstraint(
                     "Check_UserType",
-                    "UserType IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
+                    "\"UserType\" IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
             });
         }
     }

@@ -12,7 +12,7 @@ using Users.Infrastructure.Database;
 namespace Users.Infrastructure.Migrations
 {
     [DbContext(typeof(UserDbContext))]
-    [Migration("20251118215858_FirstMigration")]
+    [Migration("20251119032801_FirstMigration")]
     partial class FirstMigration
     {
         /// <inheritdoc />
@@ -75,7 +75,7 @@ namespace Users.Infrastructure.Migrations
 
                     b.ToTable("User", t =>
                         {
-                            t.HasCheckConstraint("Check_UserType", "UserType IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
+                            t.HasCheckConstraint("Check_UserType", "\"UserType\" IN ('Administrador', 'Usuario', 'Organizador', 'Soporte')");
                         });
                 });
 #pragma warning restore 612, 618

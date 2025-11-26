@@ -92,24 +92,38 @@ namespace Users.Infrastructure.Repositories
             throw new KeycloakException($"Failed to create user in Keycloak.{errorContent}");
         }
 
-        /*
 
-        public async Task AssignTypeToUserAsync(string keycloakUserId, UserType userType, string token)
+        public async Task AssignTypeToUserAsync(string keycloakUserId, string userType, string token)
         {
-            var roleUrl = $"{_configuration["Keycloak:BaseUrl"]}/admin/realms/{_configuration["Keycloak:Realm"]}/roles/{userType.ToString()}";
-            var roleRequest = new HttpRequestMessage(HttpMethod.Get, roleUrl);
-            roleRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            var roleResponse = await _httpClient.SendAsync(roleRequest);
-            if (!roleResponse.IsSuccessStatusCode)
-                throw new KeycloakException($"Failed to get realm role '{userType.ToString()}' from Keycloak. Status code: {roleResponse.StatusCode}");
+            //Buscar cliente
+            var clientResponse = await _httpClient.GetAsync($"{_configuration["Keycloak:BaseUrl"]}/admin/realms/{_configuration["Keycloak:Realm"]}/clients?clientId={_configuration["Keycloak:ClientId"]}");
+            if (!clientResponse.IsSuccessStatusCode)
+            {
+                var error = await clientResponse.Content.ReadAsStringAsync();
+                throw new Exception($"Failed to find client '{_configuration["Keycloak:ClientId"]}' in Keycloak. Response: {error}");
+            }
 
-            var roleContent = await roleResponse.Content.ReadAsStringAsync();
-            var roleObj = JsonSerializer.Deserialize<JsonElement>(roleContent);
+            var clientArray = JsonSerializer.Deserialize<JsonElement>(await clientResponse.Content.ReadAsStringAsync());
+            if (clientArray.GetArrayLength() == 0)
+                throw new Exception($"Client '{_configuration["Keycloak:ClientId"]}' not found.");
 
-            // 2. Asignar el rol al usuario
-            var url = $"{_configuration["Keycloak:BaseUrl"]}/admin/realms/{_configuration["Keycloak:Realm"]}/users/{keycloakUserId}/role-mappings/realm";
-            var requestBody = new StringContent(JsonSerializer.Serialize(new[] { roleObj }), Encoding.UTF8, "application/json");
+            var clientId = clientArray[0].GetProperty("id").GetString();
 
+            //Buscar Rol
+            var typeUrl = $"{_configuration["Keycloak:BaseUrl"]}/admin/realms/{_configuration["Keycloak:Realm"]}/clients/{clientId}/roles/{userType.ToString()}";
+            var typeRequest = new HttpRequestMessage(HttpMethod.Get, typeUrl);
+
+            typeRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            var typeResponse = await _httpClient.SendAsync(typeRequest);
+            if (!typeResponse.IsSuccessStatusCode)
+                throw new KeycloakException($"Failed to get client role '{userType.ToString()}' from Keycloak. Status code: {typeResponse.StatusCode}");
+
+            var typeContent = await typeResponse.Content.ReadAsStringAsync();
+            var typeJson = JsonSerializer.Deserialize<JsonElement>(typeContent);
+
+            //Asignar rol 
+            var url = $"{_configuration["Keycloak:BaseUrl"]}/admin/realms/{_configuration["Keycloak:Realm"]}/users/{keycloakUserId}/role-mappings/clients/{clientId}";
+            var requestBody = new StringContent(JsonSerializer.Serialize(new[] { typeJson }), Encoding.UTF8, "application/json");
             using var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = requestBody
@@ -125,7 +139,7 @@ namespace Users.Infrastructure.Repositories
             }
         }
 
-        */
+
 
         public async Task<string> UpdateUserAsync(object user, string keycloakUserId, string token)
         {

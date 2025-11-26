@@ -33,9 +33,7 @@ namespace Users.Application.Handlers.Commands
         }
 
         public async Task<string> Handle(CreateUserCommand request, CancellationToken cancellationToken)
-        {
-            try
-            {                
+        {             
                 // Validación general 
                 var validacion = new UserValidation();
                 await validacion.ValidateRequest(request.Users);
@@ -54,8 +52,9 @@ namespace Users.Application.Handlers.Commands
                 var createUserResponseJson = await _keycloakRepository.CreateUserAsync(kcUser, token);
 
                 string keycloakUserId = await _keycloakRepository.GetUserIdAsync(kcUser.username, token);
+                
 
-                //await _keycloakRepository.AssignTypeToUserAsync(keycloakUserId, request.Users.UserType, token);
+                await _keycloakRepository.AssignTypeToUserAsync(keycloakUserId, request.Users.UserType, token);
 
                 Guid.TryParse(keycloakUserId, out Guid DbId);
 
@@ -75,51 +74,33 @@ namespace Users.Application.Handlers.Commands
                     Enum.Parse<UserType>(request.Users.UserType!)
                 );
 
-                using (var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken))
-                {
-                    try
+                using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+                                
+                 try
                     {
                         _logger.LogInformation("Creando usuario en base de datos");
                         await _userRepository.CreateAsync(newUser);
+                        await _keycloakRepository.SendVerificationEmailAsync(keycloakUserId, token);
+                        await transaction.CommitAsync(cancellationToken);
 
-                        try
-                        {
-
-                            try
-                            {
-                                await _keycloakRepository.SendVerificationEmailAsync(keycloakUserId, token);
-                            }
-                            catch (Exception ex)
-                            {   
-                                await transaction.RollbackAsync(cancellationToken);
-                                _logger.LogError(ex, "Error al enviar email de verificación para el usuario", keycloakUserId);
-                                throw new KeycloakException("Error al enviar email de verificación", ex);
-                            }
-
-                            await transaction.CommitAsync(cancellationToken);
-                            _logger.LogInformation("Usuario creado exitosamente con ID", newUser.UserId);
-                            return newUser.UserId.Value.ToString();
-                        }
-                        catch (Exception ex)
-                        {
-                            await transaction.RollbackAsync(cancellationToken);
-                            _logger.LogError(ex, "Error inesperado al crear usuario en Keycloak");
-                            throw new KeycloakException("Error al crear usuario en Keycloak", ex);
-                        }
-                     }
-                    catch (DbUpdateException ex)
+                        _logger.LogInformation("Usuario creado exitosamente:", newUser.UserId);
+                        return newUser.UserId.Value.ToString();
+                    }        
+                catch (Exception ex)
                     {
-                        await transaction.RollbackAsync(cancellationToken);
+                    await transaction.RollbackAsync(cancellationToken);
+
+                    if (ex is DbUpdateException) 
+                        {
                         _logger.LogError(ex, "Error al guardar usuario en base de datos");
-                       throw new UserException("Error al guardar usuario en base de datos", ex);
-                    }   
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error al crear usuario");
-                throw;
-            }      
+                        throw new UserException("Error al guardar usuario en base de datos", ex);
+                        }
+                    else
+                        {
+                        _logger.LogError(ex, "Error al crear usuario en Keycloak");
+                        throw new KeycloakException("Error al crear usuario en Keycloak o enviar email", ex);
+                        }
+                }     
         }
     }
 }
